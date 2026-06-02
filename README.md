@@ -73,8 +73,8 @@ Tiesta employs a sophisticated "Precision Coding Protocol" via a customized Agen
 ---
 
 ## 🔗 Links
-- **Repository:** [UPDATE THIS]
-- **Issue Tracker:** [UPDATE THIS]
+- **Repository:** [Click here to view the repo](https://github.com/yakup-karatass/tiesta)
+- **Issue Tracker:** [Report bugs/issues here](https://github.com/yakup-karatass/tiesta/issues)
 
 ---
 

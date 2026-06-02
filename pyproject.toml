@@ -39,9 +39,9 @@ dependencies = [
 tiesta = "tiesta.main:cli_entry"
 
 [project.urls]
-Homepage = "https://github.com/[UPDATE THIS]/tiesta"
-Repository = "https://github.com/[UPDATE THIS]/tiesta"
-Issues = "https://github.com/[UPDATE THIS]/tiesta/issues"
+Homepage = "https://github.com/yakup-karatass/tiesta"
+Repository = "https://github.com/yakup-karatass/tiesta"
+Issues = "https://github.com/yakup-karatass/tiesta/issues"
 
 # ── Package discovery ──────────────────────────────────────────────
 # We use a standard layout: tiesta/ is the top-level package.
