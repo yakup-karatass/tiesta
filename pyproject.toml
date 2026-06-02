@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tiesta"
+version = "0.1.0"
+description = "Tiesta — Local AI Coding Assistant powered by Ollama"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Yakup Karatas", email = "yakup.karatas.developer@gmail.com"},
+]
+keywords = ["ai", "coding-assistant", "cli", "ollama", "local-llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Code Generators",
+]
+dependencies = [
+    "openai>=1.0.0",
+    "rich>=13.0.0",
+    "chromadb>=0.4.0",
+    "duckduckgo-search>=6.0.0",
+    "jedi>=0.19.0",
+    "pyserial>=3.5",
+]
+
+[project.scripts]
+tiesta = "tiesta.main:cli_entry"
+
+[project.urls]
+Homepage = "https://github.com/[UPDATE THIS]/tiesta"
+Repository = "https://github.com/[UPDATE THIS]/tiesta"
+Issues = "https://github.com/[UPDATE THIS]/tiesta/issues"
+
+# ── Package discovery ──────────────────────────────────────────────
+# We use a standard layout: tiesta/ is the top-level package.
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tiesta*"]
+
+# ── Optional dev dependencies ──────────────────────────────────────
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+]
