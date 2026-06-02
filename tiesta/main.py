@@ -107,8 +107,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--base-url",
         type=str,
-        default="[localhost](http://localhost:11434/v1)",
-        help="Ollama API base URL (default: [localhost](http://localhost:11434/v1)",
+        default="http://localhost:11434/v1",
+        help="Ollama API base URL (default: http://localhost:11434/v1)",
     )
     parser.add_argument(
         "--timeout",
