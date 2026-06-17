@@ -107,8 +107,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--base-url",
         type=str,
-        default="http://localhost:11434/v1",
-        help="Ollama API base URL (default: http://localhost:11434/v1)",
+        default="http://127.0.0.1:11434/v1",
+        help="Ollama API base URL (default: http://127.0.0.1:11434/v1)",
     )
     parser.add_argument(
         "--timeout",
@@ -326,9 +326,47 @@ async def _bootstrap(
     tui.print_info("Connecting to Ollama…")
     ping_result = await llm.ping()
     if isinstance(ping_result, LLMError):
-        tui.print_connection_error(ping_result.message)
-        await llm.close()
-        return None
+        from tiesta.core.llm_client import LLMErrorKind
+        if ping_result.kind == LLMErrorKind.CONNECTION:
+            tui.console.print("[yellow]Ollama server not running. Tiesta is launching it in the background... please wait.[/yellow]")
+            import subprocess
+            import platform
+
+            try:
+                if platform.system() == "Windows":
+                    subprocess.Popen(
+                        ["ollama", "serve"],
+                        creationflags=subprocess.CREATE_NO_WINDOW
+                    )
+                else:
+                    subprocess.Popen(
+                        ["ollama", "serve"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
+
+                connected = False
+                for _ in range(5):
+                    await asyncio.sleep(2)
+                    retry_ping = await llm.ping()
+                    if not isinstance(retry_ping, LLMError):
+                        connected = True
+                        break
+
+                if connected:
+                    tui.console.print("[green]Successfully started and connected to Ollama![/green]")
+                else:
+                    tui.print_connection_error("Failed to auto-start Ollama. " + ping_result.message)
+                    await llm.close()
+                    return None
+            except Exception as e:
+                tui.print_connection_error(f"Failed to auto-start Ollama: {e}\n{ping_result.message}")
+                await llm.close()
+                return None
+        else:
+            tui.print_connection_error(ping_result.message)
+            await llm.close()
+            return None
 
     models_result = await llm.list_models()
     if isinstance(models_result, list):

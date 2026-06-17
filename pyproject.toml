@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tiesta"
-version = "0.1.1"
+version = "0.1.2"
 description = "Tiesta — Local AI Coding Assistant powered by Ollama"
 readme = "README.md"
 requires-python = ">=3.10"

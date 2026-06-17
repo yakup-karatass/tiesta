@@ -75,7 +75,7 @@ def _fetch_ollama_models() -> list[str]:
     """Fetch the list of available models from local Ollama instance."""
     import json
     try:
-        req = urllib.request.Request("http://localhost:11434/api/tags")
+        req = urllib.request.Request("http://127.0.0.1:11434/api/tags")
         with urllib.request.urlopen(req, timeout=2.0) as response:
             data = json.loads(response.read().decode("utf-8"))
             models = [m.get("name") for m in data.get("models", []) if m.get("name")]

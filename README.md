@@ -16,6 +16,12 @@ Designed from the ground up to run entirely locally, Tiesta empowers developers 
 
 ---
 
+## 🎉 What's New in v0.1.2
+* **Autonomous Environment Management:** Tiesta now autonomously manages its own dependencies! If your local Ollama daemon is not running, Tiesta will seamlessly spin it up in the background (with full Windows compatibility) without crashing.
+* **Network Patch:** Patched IPv6/DNS resolution errors on Windows by enforcing strict `127.0.0.1` IPv4 mapping.
+
+---
+
 ## 🌟 Features
 
 * **100% Local & Private:** No external API calls. Your code never leaves your machine. Powered natively by Ollama.

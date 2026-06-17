@@ -132,7 +132,7 @@ class LLMResult:
 class LLMClientConfig:
     """All knobs in one place — no magic globals."""
 
-    base_url: str = "http://localhost:11434/v1"
+    base_url: str = "http://127.0.0.1:11434/v1"
     api_key: str = "ollama"                       # Ollama ignores this but SDK requires it
     default_model: str = "qwen2.5-coder:7b"
     temperature: float = 0.1                      # Low temp ⟶ more deterministic tool calls
@@ -610,7 +610,7 @@ class LLMClient:
                 kind=LLMErrorKind.CONNECTION,
                 message=(
                     "Cannot reach the Ollama server. "
-                    "Is `ollama serve` running on localhost:11434?"
+                    "Is `ollama serve` running on 127.0.0.1:11434?"
                 ),
                 retryable=True,
                 raw_exception=exc,
