@@ -16,7 +16,7 @@ Designed from the ground up to run entirely locally, Tiesta empowers developers 
 
 ---
 
-## 🎉 What's New in v0.1.2
+## 🎉 What's New in v0.2.0
 * **🚀 SPA-Engine (Turbo Mode):** Tiesta now features a massive hardware-accelerated Turbo Mode! By utilizing a custom Speculative Paging Architecture (SPA), Tiesta achieves lightning-fast generation speeds on massive 7B models using only 4GB VRAM. This AST-validated neural router intelligently bypasses I/O bottlenecks with Cross-Platform (POSIX/Win32) zero-copy memory mapping.
 * **Autonomous Environment Management:** Tiesta now autonomously manages its own dependencies! If your local Ollama daemon is not running, Tiesta will seamlessly spin it up in the background (with full Windows compatibility) without crashing.
 * **Network Patch:** Patched IPv6/DNS resolution errors on Windows by enforcing strict `127.0.0.1` IPv4 mapping.
