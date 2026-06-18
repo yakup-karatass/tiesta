@@ -28,7 +28,7 @@ Designed from the ground up to run entirely locally, Tiesta empowers developers 
 Tiesta's SPA-Engine fundamentally alters the performance characteristics of local AI.
 
 <div align="center">
-  <img src="paper_figures/benchmark.png" alt="SPA-Engine Performance Benchmark" width="600"/>
+  <img src="paper_figures/benchmark_throughput.png" alt="SPA-Engine Performance Benchmark" width="600"/>
 </div>
 
 * **Speed:** **3.60x Throughput Increase**.
