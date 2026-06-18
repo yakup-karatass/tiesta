@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Config:
-    default_model: str = "qwen2.5-coder:3b"
+    default_model: str = "qwen2.5-coder:7b"
     enabled_skills: List[str] = field(default_factory=list)
 
 

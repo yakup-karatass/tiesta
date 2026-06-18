@@ -72,3 +72,10 @@ venv.bak/
 TIESTA_ARCHITECTURE.md
 .tiesta/
 *.log
+
+# SPA-Engine specifics
+*.bin
+!router_weights.pt
+!spa_engine*.so
+!spa_engine*.pyd
+!paper_figures/

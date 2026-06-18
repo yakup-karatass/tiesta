@@ -7,12 +7,14 @@ Entrypoint that wires everything together:
 1. Initialises the LLM client (→ local Ollama server).
 2. Registers all tools (file_ops, bash_executor) into the ToolRegistry.
 3. Wraps the registry with the Permission Control Plane.
-4. Starts the interactive TUI chat loop OR runs a one-shot prompt.
+4. Optionally loads SPA-Engine Turbo Mode (--turbo).
+5. Starts the interactive TUI chat loop OR runs a one-shot prompt.
 
 Usage:
     tiesta                                   # interactive chat loop
     tiesta "create a basic express server"   # one-shot prompt
-    tiesta -m qwen2.5-coder:3b -w /project
+    tiesta -m qwen2.5-coder:7b -w /project
+    tiesta --turbo                           # enable SPA-Engine Turbo Mode
     python main.py                           # same as `tiesta`
 """
 
@@ -77,8 +79,9 @@ def _parse_args() -> argparse.Namespace:
             "Examples:\n"
             "  tiesta                                 # interactive mode\n"
             '  tiesta "refactor utils.py"             # one-shot prompt\n'
-            "  tiesta -m qwen2.5-coder:3b             # specify model\n"
+            "  tiesta -m qwen2.5-coder:7b             # specify model\n"
             "  tiesta -w /path/to/project             # specify workspace\n"
+            "  tiesta --turbo                         # SPA-Engine Turbo Mode\n"
         ),
     )
 
@@ -135,6 +138,11 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Disable permission prompts (auto-approve everything)",
     )
+    parser.add_argument(
+        "--turbo",
+        action="store_true",
+        help="Enable SPA-Engine Turbo Mode (dynamic layer bypass for accelerated inference)",
+    )
 
     return parser.parse_args()
 
@@ -184,7 +192,11 @@ def _build_tool_registry(workspace: str) -> tuple[ToolRegistry, FileOps]:
 # ────────────────── System prompt builder ─────────────────────────
 
 
-async def _build_system_prompt(workspace: str, registry_names: list[str]) -> str:
+async def _build_system_prompt(
+    workspace: str,
+    registry_names: list[str],
+    turbo_active: bool = False,
+) -> str:
     """Generate the system prompt optimized for small models (≤3B params).
 
     Design principles for small-model reliability:
@@ -244,6 +256,17 @@ async def _build_system_prompt(workspace: str, registry_names: list[str]) -> str
     if arch_str:
         context_block += f"\n## Architecture map\n{arch_str}\n"
 
+    # ── SPA-Engine Turbo Mode context (optional) ───────────────────
+    if turbo_active:
+        context_block += (
+            f"\n## 🚀 SPA-Engine Turbo Mode: ACTIVE\n"
+            f"The Speculative Paging Architecture (SPA-Engine) is armed.\n"
+            f"Dynamic layer bypass is available via the SPARouter in core/.\n"
+            f"The neural router predicts which transformer layers to compute\n"
+            f"vs. bypass for each token, reducing I/O and latency.\n"
+            f"Benchmark script: spa_benchmark.py\n"
+        )
+
     rules_block = (
         f"\n---\n\n"
         f"# YOU ARE TIESTA\n"
@@ -302,6 +325,82 @@ async def _build_system_prompt(workspace: str, registry_names: list[str]) -> str
     return context_block + rules_block
 
 
+
+# ────────────────── SPA-Engine Turbo Mode activation ──────────────
+
+
+def _activate_turbo_mode(tui: TiestaConsole) -> bool:
+    """Attempt to load SPA-Engine and display the Turbo Mode banner.
+
+    Returns True if Turbo Mode was successfully armed, False otherwise.
+    Failures are non-fatal — Tiesta continues in standard mode.
+    """
+    core_dir = Path(__file__).resolve().parent / "core"
+    router_weights_path = core_dir / "router_weights.pt"
+    spa_so_exists = any(core_dir.glob("spa_engine*.so")) or any(core_dir.glob("spa_engine*.pyd"))
+
+    # ── Validate prerequisites ────────────────────────────────────
+    errors: list[str] = []
+
+    if not spa_so_exists:
+        errors.append("spa_engine shared library (.so/.pyd) not found in core/")
+
+    if not (core_dir / "ai_router.py").exists():
+        errors.append("ai_router.py not found in core/")
+
+    if not router_weights_path.exists():
+        errors.append("router_weights.pt not found in core/")
+
+    if errors:
+        tui.console.print()
+        for err in errors:
+            tui.print_warning(f"Turbo Mode: {err}")
+        tui.print_warning("Falling back to standard inference mode.")
+        return False
+
+    # ── Attempt import ────────────────────────────────────────────
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(core_dir))
+        import spa_engine  # noqa: F401
+        from ai_router import SPARouter  # noqa: F401
+    except ImportError as exc:
+        tui.print_warning(f"Turbo Mode: Failed to import SPA-Engine — {exc}")
+        tui.print_warning("Falling back to standard inference mode.")
+        return False
+
+    # ── Print Turbo Mode banner ───────────────────────────────────
+    from rich.panel import Panel
+    from rich.text import Text
+
+    banner = Text()
+    banner.append("🚀 ", style="bold")
+    banner.append("SPA-Engine Turbo Mode", style="bold bright_yellow")
+    banner.append(": ", style="bold")
+    banner.append("ARMED & ACTIVE", style="bold bright_green")
+
+    detail = Text()
+    detail.append("  Dynamic Layer Bypass  ", style="bright_cyan")
+    detail.append("│", style="dim")
+    detail.append("  Neural SPARouter  ", style="bright_cyan")
+    detail.append("│", style="dim")
+    detail.append("  Zero-Copy mmap I/O", style="bright_cyan")
+
+    panel = Panel(
+        Text.assemble(banner, "\n", detail),
+        border_style="bright_yellow",
+        padding=(1, 2),
+    )
+    tui.console.print()
+    tui.console.print(panel)
+    tui.console.print()
+
+    tui.print_info(f"SPARouter weights : {router_weights_path}")
+    tui.print_info(f"SPA-Engine library: {core_dir}")
+
+    return True
+
+
 # ────────────────── Shared bootstrap logic ────────────────────────
 
 
@@ -315,6 +414,11 @@ async def _bootstrap(
 
     tui.print_banner()
     tui.print_status(model=args.model, workspace=workspace)
+
+    # ── SPA-Engine Turbo Mode ──────────────────────────────────────
+    turbo_active = getattr(args, "turbo", False)
+    if turbo_active:
+        turbo_active = _activate_turbo_mode(tui)
 
     llm_config = LLMClientConfig(
         base_url=args.base_url,
@@ -400,7 +504,9 @@ async def _bootstrap(
         tui.print_info("Permission Control Plane active for dangerous actions")
 
     # ── Orchestrator ───────────────────────────────────────────────
-    system_prompt = await _build_system_prompt(workspace, registry.names)
+    system_prompt = await _build_system_prompt(
+        workspace, registry.names, turbo_active=turbo_active
+    )
 
     orch_config = OrchestratorConfig(
         max_turns=args.max_turns,
@@ -514,7 +620,7 @@ async def _handle_slash_command(
         # since bash_executor's attribute name was inconsistent.
         workspace = str(file_ops._workspace_root)
         new_prompt = await _build_system_prompt(
-            workspace, orchestrator.tools.names
+            workspace, orchestrator.tools.names,
         )
         orchestrator.cfg.system_prompt = new_prompt
         orchestrator.reset()

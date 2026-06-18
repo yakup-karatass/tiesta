@@ -38,10 +38,10 @@ def run_wizard() -> None:
     models = _fetch_ollama_models()
     
     if not models:
-        console.print("[bold red]No Ollama models detected. Please run 'ollama pull qwen2.5-coder:3b' first.[/]")
-        model = "qwen2.5-coder:3b"
+        console.print("[bold red]No Ollama models detected. Please run 'ollama pull qwen2.5-coder:7b' first.[/]")
+        model = "qwen2.5-coder:7b"
     else:
-        default_model = "qwen2.5-coder:3b" if "qwen2.5-coder:3b" in models else models[0]
+        default_model = "qwen2.5-coder:7b" if "qwen2.5-coder:7b" in models else models[0]
         model = Prompt.ask(
             "[bold green]Which Ollama model would you like to use by default?[/]",
             choices=models,

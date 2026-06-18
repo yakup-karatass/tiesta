@@ -140,14 +140,17 @@ class BaseTool(ABC):
         • ``../`` traversal
         • Absolute paths outside the workspace
         • Symlinks that escape (resolved via ``Path.resolve()``)
+        • Writes to Tiesta's own core source code
 
         Returns the fully-resolved absolute path as a string.
 
         Raises
         ------
         SandboxViolationError
-            If the resolved path is outside ``workspace_root``.
+            If the resolved path is outside ``workspace_root`` or targets Tiesta's core files.
         """
+        import os
+        
         # If raw_path is relative, anchor it to the workspace
         candidate = Path(raw_path)
         if not candidate.is_absolute():
@@ -159,11 +162,21 @@ class BaseTool(ABC):
         resolved_norm = resolved.replace("\\", "/").rstrip("/")
         root_norm = self._workspace_root.replace("\\", "/").rstrip("/")
 
+        # 1. Ensure path is within the workspace
         if not (
             resolved_norm == root_norm
             or resolved_norm.startswith(root_norm + "/")
         ):
             raise SandboxViolationError(raw_path, self._workspace_root)
+
+        # 2. Ensure path does not target Tiesta's own source code
+        tiesta_pkg_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        pkg_norm = tiesta_pkg_dir.replace("\\", "/").rstrip("/")
+        if resolved_norm == pkg_norm or resolved_norm.startswith(pkg_norm + "/"):
+            raise SandboxViolationError(
+                raw_path,
+                f"{self._workspace_root} (ERROR: Attempted to overwrite Tiesta core files at {pkg_norm})"
+            )
 
         return resolved
 
